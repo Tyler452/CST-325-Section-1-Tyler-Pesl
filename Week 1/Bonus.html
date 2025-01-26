@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Particles with Infinity Symbol Movement</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        canvas { 
+            border: 5px solid gray; 
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="particleCanvas"></canvas>
+
+    <script>
+        class Rectangle {
+            constructor(x, y, velocityX, velocityY, color, width, height, lifespan) {
+                this.originX = x;
+                this.originY = y;
+                this.velocityX = velocityX;
+                this.velocityY = velocityY;
+                this.color = color;
+                this.width = width;
+                this.height = height;
+                this.lifespan = lifespan;
+                this.time = Math.random() * Math.PI * 2;
+                this.colorChangeTime = 0;
+            }
+
+            update() {
+                const scale = Math.min(window.innerWidth, window.innerHeight) / 3;
+                const speed = 0.02;
+                this.time += speed;
+                
+                this.x = this.originX + scale * Math.sin(this.time) / (1 + Math.pow(Math.cos(this.time), 2));
+                this.y = this.originY + scale * Math.sin(this.time) * Math.cos(this.time) / (1 + Math.pow(Math.cos(this.time), 2));
+                
+                this.width += Math.sin(this.colorChangeTime) * 0.2;
+                this.height += Math.cos(this.colorChangeTime) * 0.2;
+
+                this.width = Math.max(20, Math.min(this.width, 60));
+                this.height = Math.max(20, Math.min(this.height, 60));
+
+                const r = Math.min(255, Math.abs(Math.sin(this.colorChangeTime) * 300));
+                const g = Math.min(255, Math.abs(Math.cos(this.colorChangeTime) * 300));
+                const b = Math.min(255, Math.abs(Math.sin(this.colorChangeTime + Math.PI) * 300));
+                this.color = `rgb(${r}, ${g}, ${b})`;
+
+                this.colorChangeTime += 0.05;
+                this.lifespan--;
+            }
+
+            isAlive() {
+                return this.lifespan > 0;
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+        }
+
+        window.onload = function() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            const rectangles = [];
+
+            setInterval(() => {
+                const x = canvas.width / 2;
+                const y = canvas.height / 2;
+                const velocityX = 0;
+                const velocityY = 0;
+                const color = `rgba(${Math.random() * 300}, ${Math.random() * 300}, ${Math.random() * 300}, 1)`;
+                const lifespan = Math.random() * 100 + 50;
+
+                rectangles.push(new Rectangle(x, y, velocityX, velocityY, color, 40, 40, lifespan));
+            }, 100);
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let i = 0; i < rectangles.length; i++) {
+                    rectangles[i].update();
+                    if (!rectangles[i].isAlive()) {
+                        rectangles.splice(i, 1);
+                        i--;
+                    } else {
+                        rectangles[i].draw(ctx);
+                    }
+                }
+
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        };
+    </script>
+</body>
+</html>
